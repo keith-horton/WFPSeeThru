@@ -1,0 +1,77 @@
+;
+; WFPSeeThru.inf
+;
+
+[Version]
+Signature = "$WINDOWS NT$"
+Class = WFPCALLOUTS ; khorton: updated for WFP
+ClassGuid = {57465043-616C-6C6F-7574-5F636C617373} ; khorton: class guid for WFP callouts
+Provider = %ManufacturerName%
+CatalogFile = WFPSeeThru.cat
+DriverVer = 09/30/2023,1.0.0.1; khorton: created a version
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 12
+WFPSeeThru_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+WFPSeeThru.sys = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll = 1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName% = Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%WFPSeeThru.DeviceDesc% = WFPSeeThru_Device, Root\WFPSeeThru ; TODO: edit hw-id (khorton ???)
+
+[WFPSeeThru_Device.NT]
+CopyFiles = Drivers_Dir
+
+[Drivers_Dir]
+WFPSeeThru.sys
+
+;-------------- Service installation
+[WFPSeeThru_Device.NT.Services]
+AddService = WFPSeeThru,%SPSVCINST_ASSOCSERVICE%, WFPSeeThru_Service_Inst
+
+; -------------- WFPSeeThru driver install sections
+[WFPSeeThru_Service_Inst]
+DisplayName    = %WFPSeeThru.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\WFPSeeThru.sys
+
+;
+;--- WFPSeeThru_Device Coinstaller installation ------
+;
+
+[WFPSeeThru_Device.NT.CoInstallers]
+AddReg    = WFPSeeThru_Device_CoInstaller_AddReg
+CopyFiles = WFPSeeThru_Device_CoInstaller_CopyFiles
+
+[WFPSeeThru_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[WFPSeeThru_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[WFPSeeThru_Device.NT.Wdf]
+KmdfService = WFPSeeThru, WFPSeeThru_wdfsect
+[WFPSeeThru_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName = "khorton@microsoft.com" ; khorton: set the manufacturer name
+DiskName = "WFPSeeThru Installation Disk"
+WFPSeeThru.DeviceDesc = "WFPSeeThru Device"
+WFPSeeThru.SVCDESC = "WFPSeeThru Service"
